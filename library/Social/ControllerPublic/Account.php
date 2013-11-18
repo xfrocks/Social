@@ -39,19 +39,26 @@ class Social_ControllerPublic_Account extends XFCP_Social_ControllerPublic_Accou
 		}
 		else
 		{
+			$profile = false;
+
 			if ($visitor[$helper->provider . '_auth_id'])
 			{
-				$viewParams['profile'] = $profile = $helper->getProfile($visitor[$provider . '_auth_id']);
-				if ($providerAssoc = $this->_getUserExternalModel()->getExternalAuthAssociation($provider, $visitor[$provider . '_auth_id']))
+				$authId = $visitor[$helper->provider . '_auth_id'];
+
+				if ($providerAssoc = $this->_getUserExternalModel()->getExternalAuthAssociation($provider, $authId))
 				{
-					$permanentUserInfo = unserialize($providerAssoc['extra_data']);
-					if (is_array($permanentUserInfo))
+					$providerAssocExtraData = unserialize($providerAssoc['extra_data']);
+
+					if (!empty($providerAssocExtraData['token']))
 					{
-						$viewParams['profile'] = array_merge($viewParams['profile'], $permanentUserInfo);
+						$helper->token = $providerAssocExtraData['token'];
 					}
+
+					$profile = $helper->getProfile($authId);
 				}
 			}
 
+			$viewParams['profile'] = $profile;
 			$viewParams['hasPassword'] = $auth->hasPassword();
 			$viewParams['provider'] = $provider;
 			$viewParams['providerName'] = new XenForo_Phrase('social_' . $provider);
